@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=69.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "recipe-image-generator"
+authors = [
+    {name = "Shapescape"}
+]
+dynamic = ["version"]
+dependencies = [
+    "Pillow ~=10.1",  # Pillow ~=9.3 before update
+    "tqdm ~=4.62",
+    "beautifulsoup4 ~=4.10",
+    "requests ~=2.27",
+    "appdirs ~=1.4",
+    "GitPython ~=3.1",
+    "async-tkinter-loop ==0.1.0",
+    "better-json-tools ~=1.0,>=1.0.3",
+    "numpy ~=1.26.0",  # numpy ~=1.23.0 before update
+]
+
+[project.scripts]
+recipe-image-generator = "recipe_image_generator.main:main"
+
+[tool.setuptools.dynamic]
+version = {attr = "recipe_image_generator.version.VERSION"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+
