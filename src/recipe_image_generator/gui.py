@@ -172,7 +172,6 @@ class GuiProjectApp(tk.Tk):
 
     def update_from_gui(self):
         set_interactive_mode(self.view.interactive_mode.get())
-        self.project.use_pixels_rp = self.view.use_pixels_rp.get()
         self.project.scale = self.view.get_scale()
         self.project.template = self.view.template.get()
         self.project.resource_pack = (
@@ -204,7 +203,6 @@ class GuiProjectApp(tk.Tk):
         logging.info(
             "\n==============================================\n"
             f'Interactive mode: {get_interactive_mode()}\n'
-            f'Using Pixels RP: {self.project.use_pixels_rp}\n'
             f'Behavior pack: {self.project.behavior_pack}\n'
             f'Resource pack: {self.project.resource_pack}\n'
             f'App data: {self.project.global_data}\n'
@@ -430,13 +428,6 @@ class GuiProjectView(ttk.Frame):
             variable=self.interactive_mode)
         self.interactive_mode_checkbutton.pack(side='top', expand=False, fill='x')
 
-        # Use pixels rp
-        self.use_pixels_rp = tk.BooleanVar(value=False)
-        self.use_pixels_rp_checkbutton = ttk.Checkbutton(
-            checkbox_frame, text='Use Pixels RP',
-            variable=self.use_pixels_rp)
-        self.use_pixels_rp_checkbutton.pack(side='top', expand=False, fill='x')
-
         # Progress bar info
         self.progres_bar_label = ttk.Label(self, text="", width=100)
         self.progres_bar_label.pack(side='bottom', expand=False, fill='x')
@@ -502,7 +493,6 @@ class GuiProjectView(ttk.Frame):
         self.dump_variables_button.config(state=state)
         self.generate_button.config(state=state)
         self.interactive_mode_checkbutton.config(state=state)
-        self.use_pixels_rp_checkbutton.config(state=state)
         self.local_data_init_button.config(state=state)
         self.scale_spinbox.config(state=state)  # type: ignore
         self.rp_path_entry.config(state=state)  # type: ignore
@@ -599,13 +589,9 @@ class ResourcePathSelectionDialog(tk.Toplevel):
 
         # Top buttons row
         # Button 1
-        if master_view.use_pixels_rp.get():
-            initialdir = (
-                get_app_data_path() / "data/Pixels-RP").resolve().as_posix()
-            title = f'Looking for "{item_name}:{item_data}" in Pixels RP...'
-        else:
-            initialdir = (get_app_data_path() / "data/RP").resolve().as_posix()
-            title = f'Looking for "{item_name}:{item_data}" in vanilla RP...'
+        initialdir = (get_app_data_path() / "data/RP").resolve().as_posix()
+        title = f'Looking for "{item_name}:{item_data}" in vanilla RP...'
+
         im_path_selection_buttons = ttk.Frame(im_interaction_frame)
         im_path_selection_buttons.pack(side='top', expand=False, fill='x')
         im_serch_default_rp_button = ttk.Button(
@@ -626,14 +612,9 @@ class ResourcePathSelectionDialog(tk.Toplevel):
                 prefix="RP")
         )
         # Button 3
-        if master_view.use_pixels_rp.get():
-            initialdir = (
-                get_app_data_path() / "data/pixels-block-images").resolve().as_posix()
-            title = f'Looking for "{item_name}:{item_data}" in Pixels block images...'
-        else:
-            initialdir = (
-                get_app_data_path() / "data/block-images").resolve().as_posix()
-            title = f'Looking for "{item_name}:{item_data}" in vanilla block images...'
+        initialdir = (
+            get_app_data_path() / "data/block-images").resolve().as_posix()
+        title = f'Looking for "{item_name}:{item_data}" in vanilla block images...'
         im_search_project_block_button.pack(
             side='left', expand=True, fill='x', padx=5)
         im_search_default_block_button = ttk.Button(

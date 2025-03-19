@@ -225,7 +225,6 @@ class Project:
         self.resource_pack: Path = None
         self.global_data: Path = get_app_data_path() / "data"
         self.local_data: Path = None
-        self.use_pixels_rp = False
         self.template = "custom_template"
         self.scale = 1  # Additional scale multiplayer for generated images
 
@@ -761,13 +760,13 @@ class Project:
                     ] = get_image_provider(
                         recipe.keys[key], recipe.name,
                         self.behavior_pack, self.resource_pack, self.local_data,
-                        self.interactive_texture_getters, self.use_pixels_rp)
+                        self.interactive_texture_getters)
             # If recipe uses the result find the path for its texture as well
             if 'result' in page_object["items"]:
                 crafting_result_texture_path = get_image_provider(
                     recipe.result, recipe.name,
                     self.behavior_pack, self.resource_pack, self.local_data,
-                    self.interactive_texture_getters, self.use_pixels_rp)
+                    self.interactive_texture_getters)
                 item_texture_providers["result"] = crafting_result_texture_path
 
             # Get the real background path
@@ -820,12 +819,12 @@ class Project:
                 item_texture_paths["input"] = get_image_provider(
                     recipe.input, recipe.name, self.behavior_pack,
                     self.resource_pack, self.local_data,
-                    self.interactive_texture_getters, self.use_pixels_rp)
+                    self.interactive_texture_getters)
             if 'output' in page_object["items"]:
                 item_texture_paths["output"] = get_image_provider(
                     recipe.output, recipe.name, self.behavior_pack,
                     self.resource_pack, self.local_data,
-                    self.interactive_texture_getters, self.use_pixels_rp)
+                    self.interactive_texture_getters)
             # Get the real background path
             if 'background' in page_object:
                 true_background_path = find_existing_subpath(
@@ -875,17 +874,17 @@ class Project:
                 item_texture_paths["input"] = get_image_provider(
                     recipe.input, recipe.name, self.behavior_pack,
                     self.resource_pack, self.local_data,
-                    self.interactive_texture_getters, self.use_pixels_rp)
+                    self.interactive_texture_getters)
             if 'output' in page_object["items"]:
                 item_texture_paths["output"] = get_image_provider(
                     recipe.output, recipe.name, self.behavior_pack,
                     self.resource_pack, self.local_data,
-                    self.interactive_texture_getters, self.use_pixels_rp)
+                    self.interactive_texture_getters)
             if 'reagent' in page_object["items"]:
                 item_texture_paths["reagent"] = get_image_provider(
                     recipe.reagent, recipe.name, self.behavior_pack,
                     self.resource_pack, self.local_data,
-                    self.interactive_texture_getters, self.use_pixels_rp)
+                    self.interactive_texture_getters)
             # Get the real background path
             if 'background' in page_object:
                 true_background_path = find_existing_subpath(
@@ -938,32 +937,21 @@ def get_image_provider(
         recipe_key: RecipeKey, recipe_name: str,
         behavior_pack: Path, resource_pack: Path, workspace_path: Path,
         interactive_texture_getters: List[InteractivetextureGetter],
-        use_pixels_rp: bool) -> Callable[[], Image.Image]:
+        ) -> Callable[[], Image.Image]:
     '''
     Returns a function that returns an Image of a RecipeKey.
 
     :param recipe_key: the recipe key to get the texture for.
     :param recipe_name: the name of the recipe used for user messages
     '''
-    # Lists of RP paths and block-images paths used for some functions:
-    if use_pixels_rp:
-        rp_paths = [
-            resource_pack,
-            get_app_data_path() / "data/Pixels-RP",
-            get_app_data_path() / "data/RP"
-        ]
-        block_images_paths = [
-            workspace_path / "block-images",
-            get_app_data_path() / "data/pixels-block-images",
-            get_app_data_path() / "data/block-images"]
-    else:
-        rp_paths = [
-            resource_pack,
-            get_app_data_path() / "data/RP"
-        ]
-        block_images_paths = [
-            workspace_path / "block-images",
-            get_app_data_path() / "data/block-images"]
+    # Lists of RP paths and block-images paths used for some functions::
+    rp_paths = [
+        resource_pack,
+        get_app_data_path() / "data/RP"
+    ]
+    block_images_paths = [
+        workspace_path / "block-images",
+        get_app_data_path() / "data/block-images"]
 
     # Spawn eggs:
     if isinstance(recipe_key.data, ActorIdWildcard):
