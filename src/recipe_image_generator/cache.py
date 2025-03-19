@@ -20,8 +20,36 @@ import appdirs
 from better_json_tools import load_jsonc
 from .utils import is_connected
 
-DATABASE_URL = "https://github.com/ShapescapeMC/recipe-image-generator-data.git"
-BRANCH = "master"
+import os
+
+# DATABASE_URL = "https://github.com/ShapescapeMC/recipe-image-generator-data.git"
+# BRANCH = "master"
+
+@cache
+def get_database_url() -> str:
+    try:
+        return os.environ['SHAPESCAPE_RIG_DATABASE_URL']
+    except KeyError:
+        logging.error(
+            "SHAPESCAPE_RIG_DATABASE_URL environment variable is not set.\n"
+            "This is required for the program to work. The variable should "
+            "store the URL to a Git repository, with the mapping and textures "
+            "for the program to work, for example:\n"
+            "'https://github.com/ShapescapeMC/recipe-image-generator-data.git'\n"
+            "Your Git should be authorized to access and modify the repository."
+        )
+        exit(1)
+
+
+@cache
+def get_branch():
+    try:
+        return os.environ['SHAPESCAPE_RIG_BRANCH']
+    except KeyError:
+        print(
+            "SHAPESCAPE_RIG_BRANCH environment variable is not set. "
+            "Using 'main' as default.")
+    return "main"
 
 @cache
 def get_app_data_path():
@@ -85,14 +113,14 @@ def force_pull_database():
     logging.info(f"The database path is: {repo_path.as_posix()}")
     if not repo_path.exists():
         repo_path.mkdir(parents=True, exist_ok=True)
-        logging.info(f"Downloading the app data from: {DATABASE_URL}")
-        repo = git.Repo.clone_from(DATABASE_URL, get_app_data_path() / "data")
-        repo.git.checkout(BRANCH)
+        logging.info(f"Downloading the app data from: {get_database_url()}")
+        repo = git.Repo.clone_from(get_database_url(), get_app_data_path() / "data")
+        repo.git.checkout(get_branch())
     else:
-        logging.info(f"Updating the app data from: {DATABASE_URL}")
+        logging.info(f"Updating the app data from: {get_database_url()}")
         repo = git.Repo(repo_path)
-        repo.git.checkout(BRANCH)
-        repo.git.reset(f'origin/{BRANCH}')
+        repo.git.checkout(get_branch())
+        repo.git.reset(f'origin/{get_branch()}')
         repo.git.reset('--hard')
         repo.git.clean('-fd')
         repo.remotes.origin.pull()
