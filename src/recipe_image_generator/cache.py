@@ -13,6 +13,7 @@ from typing import Optional
 from pathlib import Path
 import json
 import git
+import git.exc
 import logging
 
 import appdirs
@@ -31,12 +32,16 @@ def get_database_url() -> str:
         return os.environ['SHAPESCAPE_RIG_DATABASE_URL']
     except KeyError:
         logging.error(
-            "SHAPESCAPE_RIG_DATABASE_URL environment variable is not set.\n"
-            "This is required for the program to work. The variable should "
-            "store the URL to a Git repository, with the mapping and textures "
-            "for the program to work, for example:\n"
-            "'https://github.com/ShapescapeMC/recipe-image-generator-data.git'\n"
-            "Your Git should be authorized to access and modify the repository."
+            "\n"
+            "The SHAPESCAPE_RIG_DATABASE_URL environment variable is not set. "
+            "Please set the variable to the Git URL of a repository that "
+            "contains the resources needed for the application to work."
+            "\n\n"
+            "For example you can set the variable to:\n"
+            "- https://github.com/ShapescapeMC/Shapescape-Recipe-Image-Generator.git"
+            "\n\n"
+            "You can find more details in the documentation of the application."
+            "\n"
         )
         exit(1)
 
@@ -46,7 +51,7 @@ def get_branch():
     try:
         return os.environ['SHAPESCAPE_RIG_BRANCH']
     except KeyError:
-        print(
+        logging.warning(
             "SHAPESCAPE_RIG_BRANCH environment variable is not set. "
             "Using 'main' as default.")
     return "main"
@@ -104,6 +109,57 @@ class CachedSettings:
         with out_path.open('w') as f:
             json.dump(self.as_dict(), f, indent='\t', sort_keys=True)
 
+def _verify_repo_url(app_data_repo: git.Repo):
+    '''
+    Verifies if the repository is the correct one by checking the remote URL
+    of the data repository in the cache agains the URL from the environment
+    variable.
+
+    :param app_data_repo: The repository object of the data repository of the
+        application.
+    '''
+    url = get_database_url()
+    if app_data_repo.remotes.origin.url != url:
+        logging.error(
+            "\n\n"
+            "The URL from the SHAPECAPE_RIG_DATABASE_URL environment variable "
+            "does not match the URL of the repository in the application data.\n"
+            "Please remove the repository from the application data directory "
+            "manually and try again.\n"
+            f"Delete this directory: {get_app_data_path() / 'data'}"
+            "\n\n"
+            "More details:\n"
+            f"- SHAPESCAPE_RIG_BRANCH variable: {url}\n"
+            f"- Repository remote URL: {app_data_repo.remotes.origin.url}"
+            "\n"
+        )
+        exit(1)
+
+def _try_checkout_branch(repo: git.Repo):
+    '''
+    Tries to checkout the branch from the environment variable. If the branch
+    does not exist, it stops the application with an error message.
+
+    :param repo: The repository object of the data repository of the application.
+    '''
+    branch = get_branch()
+    try:
+        repo.git.checkout(branch)
+    except git.exc.GitCommandError:
+        logging.error(
+            "\n\n"
+            "The branch from your configuration (SHAPESCAPE_RIG_BRANCH or "
+            "'main' by default) does not exist in the repository.\n"
+            "Please check the branch name and try again.\n"
+            "\n\n"
+            "More details:\n"
+            f"- Branch from your settings: {branch}\n"
+            f"- Repository path: {get_app_data_path() / 'data'}"
+            "\n"
+        )
+        exit(1)
+
+
 # Database synchronisation
 def force_pull_database():
     '''
@@ -115,11 +171,12 @@ def force_pull_database():
         repo_path.mkdir(parents=True, exist_ok=True)
         logging.info(f"Downloading the app data from: {get_database_url()}")
         repo = git.Repo.clone_from(get_database_url(), get_app_data_path() / "data")
-        repo.git.checkout(get_branch())
+        _try_checkout_branch(repo)
     else:
         logging.info(f"Updating the app data from: {get_database_url()}")
         repo = git.Repo(repo_path)
-        repo.git.checkout(get_branch())
+        _verify_repo_url(repo)
+        _try_checkout_branch(repo)
         repo.git.reset(f'origin/{get_branch()}')
         repo.git.reset('--hard')
         repo.git.clean('-fd')
@@ -136,6 +193,7 @@ def push_database():
     repo_path = get_app_data_path() / "data"
     logging.info(f"The database path is: {repo_path.as_posix()}")
     repo = git.Repo(repo_path)
+    _verify_repo_url(repo)
     if repo.is_dirty(untracked_files=True):
         logging.info("There are uncommited changes in the database. Uploading to remote repository...")
         repo.git.add('-A')

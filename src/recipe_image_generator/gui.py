@@ -482,7 +482,8 @@ class GuiProjectView(ttk.Frame):
             self.template_menu_button["menu"].add_command(
                 label=t, command=lambda t=t: self.template.set(t))
         # Set the default value
-        self.template.set(template_paths[0])
+        if len(template_paths) > 0:
+            self.template.set(template_paths[0])
 
     def set_gui_state(self, state: Literal['disabled', 'normal']) -> None:
         '''
