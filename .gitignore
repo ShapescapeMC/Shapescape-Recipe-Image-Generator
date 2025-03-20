@@ -6,3 +6,4 @@ venv
 build
 recipe-image-generator.code-workspace
 /.idea
+docs/_build
